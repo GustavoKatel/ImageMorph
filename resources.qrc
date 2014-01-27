@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/styles">
+        <file>default.style</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>images/monkey.png</file>
+        <file>images/play.png</file>
+        <file>images/stop.png</file>
+        <file>images/record.png</file>
+        <file>images/repeat.png</file>
+    </qresource>
+</RCC>
