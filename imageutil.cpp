@@ -9,6 +9,16 @@ ImageUtil::ImageUtil() : QObject(0)
 
 }
 
+ImageUtil::ImageUtil(QColor &outside) : QObject(0), outside_color(outside)
+{
+
+}
+
+ImageUtil::ImageUtil(const ImageUtil &cpy) : QObject(0), outside_color(cpy.getOutside_color())
+{
+
+}
+
 void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *imager, double a, double b, double p, double t)
 {
     int w = imager->getSize().width(),
@@ -85,8 +95,8 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
                 double dist = std::abs( sA * X.x() + sB * X.y() + sC ) / std::sqrt( std::pow(sA, 2) + std::pow(sB, 2) );
                 double weight = std::pow( std::pow(pq2Norm,p) / (a + dist)  , b );
 
-                double deltaX = X2.x() - X.x(),
-                        deltaY = X2.y() - X.y();
+                double deltaX = X2.x(), // - X.x(),
+                        deltaY = X2.y(); // - X.y();
 
                 sumX += deltaX * weight;
                 sumY += deltaY * weight;
@@ -97,16 +107,18 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
 
             }
 
-            X2 = QPointF( X.x() + sumX/sumW, X.y() + sumY/sumW );
+            // X2 = QPointF( X.x() + sumX/sumW, X.y() + sumY/sumW );
+            X2 = QPointF( sumX/sumW, sumY/sumW );
 
             X2.setX( std::floor(X2.x()+0.5) );
             X2.setY( std::floor(X2.y()+0.5) );
 
             // collect the color
             unsigned int r, g, b;
-//            qDebug()<<X2;
-            image1->getPixel( X2.x(), X2.y(), &r, &g, &b);
+//            image1->getPixel( X2.x(), X2.y(), &r, &g, &b);
+            this->bilinearInterpolation(image1, X2.x(), X2.y(), &r, &g, &b, 1);
 
+            // TODO: bilinear here?
             imager->setPixel(col, row, r, g, b);
 
         }
@@ -154,10 +166,86 @@ void ImageUtil::morph(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *
     emit imager->update();
 }
 
-void ImageUtil::interpolacaoBilinear(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b)
+void ImageUtil::bilinearInterpolation(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b, int dist)
 {
     if(!image) return;
 
+    int w = image->getSize().width();
+    int h = image->getSize().height();
 
+    /*
+     *      dist       dist
+     *  | -------- | -------|
+     *  Q12---------------Q22 -
+     *  |-------------------| dist
+     *  |---- (col,row) ----| -
+     *  |-------------------| dist
+     *  Q11---------------Q21 -
+     *
+     * Formula:
+     * F(col,row) = ( 1 / pow( ( 2*dist ), 2 ) ) *
+     * ( fQ11 * dist * dist +
+     *   fQ21 * dist * dist +
+     *   fQ12 * dist * dist +
+     *   fQ22 * dist * dist )
+     *
+     */
+
+    // check if the limits were exceeded
+    if( col+dist>=w || col-dist<0 || row+dist>=h || row-dist<0 || dist==0 )
+    {
+        testAndSet(r, outside_color.red() );
+        testAndSet(g, outside_color.green() );
+        testAndSet(b, outside_color.blue() );
+        return;
+    }
+
+    unsigned int q12[3],
+            q22[3],
+            q11[3],
+            q21[3];
+
+
+    // Q12( col-dist, row-dist )
+    image->getPixel(col-dist, row-dist, q12, q12 + 1, q12 + 2);
+
+    // Q22( col+dist, row-dist )
+    image->getPixel(col+dist, row-dist, q22, q22 + 1, q22 + 2);
+
+    // Q21( col+dist, row+dist )
+    image->getPixel(col+dist, row+dist, q21, q21 + 1, q21 + 2);
+
+    // Q11( col-dist, row+dist )
+    image->getPixel(col-dist, row+dist, q11, q11 + 1, q11 + 2);
+
+    unsigned int fQ11, fQ21, fQ12, fQ22, c[3];
+    double cD;
+    for(int i=0;i<3;i++)
+    {
+        fQ11 = q11[i];
+        fQ21 = q21[i];
+        fQ12 = q12[i];
+        fQ22 = q22[i];
+
+        cD = ( 1 / std::pow( (2*dist), 2.0 ) );
+        cD = cD * std::pow(dist, 2.0) * ( fQ11 + fQ21 + fQ12 + fQ22 );
+
+        c[i] = (unsigned int)cD;
+
+    }
+
+    testAndSet( r, c[0] );
+    testAndSet( g, c[1] );
+    testAndSet( b, c[2] );
 
 }
+QColor ImageUtil::getOutside_color() const
+{
+    return outside_color;
+}
+
+void ImageUtil::setOutside_color(const QColor &value)
+{
+    outside_color = value;
+}
+

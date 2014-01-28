@@ -79,6 +79,8 @@ private slots:
 
     void on_trasitions_spin_editingFinished();
 
+    void on_outside_color_button_clicked();
+
 private:
     Ui::MainWindow *ui;
     //
@@ -87,6 +89,8 @@ private:
     ImageWrapper *image1, *image2, *imager, *image1t2, *image2t1;
     ImageHighlight *image1_widget, *image2_widget;
     bool image1_ready, image2_ready;
+
+    QColor outside_color;
 
     QTimer *play_timer;
     bool isRecording, isRepeating;

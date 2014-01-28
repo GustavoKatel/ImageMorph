@@ -66,18 +66,16 @@ void ImageWrapper::getPixel(int col, int row, unsigned int *r, unsigned int *g, 
 {
     QRgb rgb;
     if(row>=0 && col>=0 && row<image->height() && col<image->width())
+    {
         rgb = image->pixel(col, row);
-    else
+    } else {
         rgb = qRgba(0,0,0,0);
+    }
 
-    if(r)
-        *r = qRed(rgb);
-    if(g)
-        *g = qGreen(rgb);
-    if(b)
-        *b = qBlue(rgb);
-    if(a)
-        *a = qAlpha(rgb);
+    testAndSet(r, qRed(rgb));
+    testAndSet(g, qGreen(rgb));
+    testAndSet(b, qBlue(rgb));
+    testAndSet(a, qAlpha(rgb));
 }
 
 void ImageWrapper::fill(QColor &color)
@@ -90,6 +88,9 @@ void ImageWrapper::resize(int width, int height, bool keepAspectRation)
 {
     QPixmap pix = QPixmap::fromImage(*image);
     QImage *nimg = 0;
+
+    if(width % 2) width += 1;
+    if(height % 2) height += 1;
 
     double scaleW = width / (double)image->width(),
             scaleH = height / (double)image->height();
@@ -147,6 +148,7 @@ void ImageWrapper::load(QString &fileName)
         loadStructure(fileName);
     } else {
         image->load(fileName);
+        checkSizeP2();
         fixedSegments();
     }
 
@@ -205,6 +207,15 @@ void ImageWrapper::addSegment(QPointF &begin, QPointF &end)
 SEGMENT_LIST &ImageWrapper::getSegments()
 {
     return orientedSegments;
+}
+
+void ImageWrapper::checkSizeP2()
+{
+    int w = image->width();
+    int h = image->height();
+    if(w%2) w+=1;
+    if(h%2) h+=1;
+    this->resize(w,h);
 }
 
 void ImageWrapper::loadStructure(QString fileName)

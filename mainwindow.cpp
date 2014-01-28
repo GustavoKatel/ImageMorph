@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QProcess>
+#include <QColorDialog>
+#include <QRgb>
 
 #include "imagepreviewdialog.h"
 #include "imageutil.h"
@@ -72,6 +74,9 @@ MainWindow::MainWindow(QWidget *parent) :
     isRecording = false;
     isRepeating = false;
     this->rec_output = 0;
+
+    this->outside_color = QColor(255,255,255);
+    ui->outside_color_button->setStyleSheet("background-color: #fff;");
 
 }
 
@@ -275,7 +280,7 @@ void MainWindow::_doMorph()
 
     this->progress->setVisible(true);
 
-    ImageUtil iutil;
+    ImageUtil iutil(outside_color);
     connect( &iutil, SIGNAL(warp_progress(int,int)), this, SLOT(slot_progress(int,int)) );
     connect( &iutil, SIGNAL(morph_progress(int,int)), this, SLOT(slot_progress(int,int)) );
 
@@ -446,6 +451,7 @@ void MainWindow::on_stop_button_clicked()
 void MainWindow::on_record_button_toggled(bool checked)
 {
     isRecording = checked;
+    ui->repeat_button->setEnabled(!checked);
     if(checked)
     {
         QString filename = QFileDialog::getSaveFileName(this, tr("Select output file"), "", "MPEG-4 Video (*.mp4)");
@@ -501,6 +507,9 @@ void MainWindow::slot_play_timer_timeout()
     {
         if(nv>100)
             nv = 0;
+    } else {
+        if(nv>100)
+            this->play_timer->stop();
     }
 
     if(isRecording)
@@ -513,7 +522,6 @@ void MainWindow::slot_play_timer_timeout()
             record_tick();
         }
     }
-
 
 }
 
@@ -579,4 +587,12 @@ void MainWindow::doFFMPEG()
 
     ffmpeg.execute(cmd);
 
+}
+
+void MainWindow::on_outside_color_button_clicked()
+{
+    QRgb rgba = QColorDialog::getRgba();
+    this->outside_color = QColor(rgba);
+    QString ssColor = QString("background-color: %1;").arg(QColor(rgba).name());
+    ui->outside_color_button->setStyleSheet(ssColor);
 }

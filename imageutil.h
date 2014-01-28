@@ -2,6 +2,7 @@
 #define IMAGEUTIL_H
 
 #include <QObject>
+#include <QColor>
 
 #include "imagewrapper.h"
 
@@ -10,7 +11,22 @@ class ImageUtil : public QObject {
     Q_OBJECT
 
 public:
+    /**
+     * @brief ImageUtil Default constructor
+     */
     ImageUtil();
+
+    /**
+     * @brief ImageUtil Constructor
+     * @param outside Image outside color
+     */
+    ImageUtil(QColor &outside);
+
+    /**
+     * @brief ImageUtil Default copy constructor
+     * @param cpy ImageUtil to copy
+     */
+    ImageUtil(const ImageUtil &cpy);
 
     /**
      * @brief warp
@@ -33,11 +49,17 @@ public:
      */
     void morph(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *imager, double t);
 
-    void interpolacaoBilinear(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b);
+    void bilinearInterpolation(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b, int dist);
+
+    QColor getOutside_color() const;
+    void setOutside_color(const QColor &value);
 
 signals:
     void warp_progress(int progress, int total);
     void morph_progress(int progress, int total);
+
+private:
+    QColor outside_color;
 
 };
 

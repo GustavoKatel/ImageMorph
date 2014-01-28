@@ -7,6 +7,8 @@
 #include <QVector>
 #include <QPair>
 
+#define testAndSet(ptr, value) if(ptr) *ptr = value;
+
 /**
   * Define the list of segments. QMap<begin, end>
   */
@@ -56,6 +58,7 @@ private:
 
     SEGMENT_LIST orientedSegments;
 
+    void checkSizeP2();
     void loadStructure(QString fileName);
     void fixedSegments();
 
