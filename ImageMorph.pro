@@ -17,16 +17,19 @@ SOURCES += main.cpp\
     imagepreviewdialog.cpp \
     imagewrapper.cpp \
     imagehighlight.cpp \
-    imageutil.cpp
+    imageutil.cpp \
+    segmentseditdialog.cpp
 
 HEADERS  += mainwindow.h \
     imagepreviewdialog.h \
     imagewrapper.h \
     imagehighlight.h \
-    imageutil.h
+    imageutil.h \
+    segmentseditdialog.h
 
 FORMS    += mainwindow.ui \
-    imagepreviewdialog.ui
+    imagepreviewdialog.ui \
+    segmentseditdialog.ui
 
 RESOURCES += \
     resources.qrc

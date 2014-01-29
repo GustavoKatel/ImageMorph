@@ -116,7 +116,8 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
             // collect the color
             unsigned int r, g, b;
 //            image1->getPixel( X2.x(), X2.y(), &r, &g, &b);
-            this->bilinearInterpolation(image1, X2.x(), X2.y(), &r, &g, &b, 1);
+//            this->bilinearInterpolation(image1, X2.x(), X2.y(), &r, &g, &b, 1);
+            getColor(image1, X2.x(), X2.y(), &r, &g, &b);
 
             // TODO: bilinear here?
             imager->setPixel(col, row, r, g, b);
@@ -166,7 +167,28 @@ void ImageUtil::morph(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *
     emit imager->update();
 }
 
-void ImageUtil::bilinearInterpolation(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b, int dist)
+void ImageUtil::bilinearInterpolation(ImageWrapper *image, ImageWrapper *res, int dist)
+{
+    if(!res || !image) return;
+
+    res->copy(image);
+
+    int w = image->getSize().width();
+    int h = image->getSize().height();
+
+    unsigned int q[3];
+
+    for(int col=0;col<w;col++)
+    {
+        for(int row=0;row<h;row++)
+        {
+            bilinearInterpolationInPoint(image, col, row, q, q+1, q+2, dist);
+            res->setPixel(col, row, q[0], q[1], q[2]);
+        }
+    }
+}
+
+void ImageUtil::bilinearInterpolationInPoint(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b, int dist)
 {
     if(!image) return;
 
@@ -247,5 +269,30 @@ QColor ImageUtil::getOutside_color() const
 void ImageUtil::setOutside_color(const QColor &value)
 {
     outside_color = value;
+}
+
+void ImageUtil::getColor(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b)
+{
+    if(!image) return;
+
+    int w = image->getSize().width();
+    int h = image->getSize().height();
+
+    // check if the limits were exceeded
+    if( col>=w || col<0 || row>=h || row<0)
+    {
+        testAndSet(r, outside_color.red() );
+        testAndSet(g, outside_color.green() );
+        testAndSet(b, outside_color.blue() );
+        return;
+    }
+    unsigned int q[3];
+    image->getPixel(col, row, q, q + 1, q + 2);
+
+
+    testAndSet( r, q[0] );
+    testAndSet( g, q[1] );
+    testAndSet( b, q[2] );
+
 }
 

@@ -49,7 +49,9 @@ public:
      */
     void morph(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *imager, double t);
 
-    void bilinearInterpolation(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b, int dist);
+    void bilinearInterpolation(ImageWrapper *image, ImageWrapper *res, int dist);
+
+    void bilinearInterpolationInPoint(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b, int dist);
 
     QColor getOutside_color() const;
     void setOutside_color(const QColor &value);
@@ -60,6 +62,8 @@ signals:
 
 private:
     QColor outside_color;
+
+    void getColor(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b);
 
 };
 

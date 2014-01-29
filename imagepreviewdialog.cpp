@@ -69,7 +69,13 @@ void ImagePreviewDialog::on_go_button_clicked()
 {
     if(ui->listWidget->hasFocus() && ui->listWidget->selectedItems().size()>0)
     {
-        QString item = ui->listWidget->selectedItems().at(0)->text();
+        QString item = ui->listWidget->selectedItems().at(0)->text();      
+        QFileInfo info(curDir.absoluteFilePath(item));
+        if( info.exists() && info.isFile() )
+        {
+            accept();
+            return;
+        }
         ui->current_dir_text->setText( curDir.absoluteFilePath( item ) );
     }
 

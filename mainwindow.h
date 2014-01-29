@@ -81,6 +81,10 @@ private slots:
 
     void on_outside_color_button_clicked();
 
+    void on_image1_segments_edit_button_clicked();
+
+    void on_image2_segments_edit_button_clicked();
+
 private:
     Ui::MainWindow *ui;
     //

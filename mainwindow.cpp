@@ -10,6 +10,7 @@
 #include <QRgb>
 
 #include "imagepreviewdialog.h"
+#include "segmentseditdialog.h"
 #include "imageutil.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -138,7 +139,7 @@ void MainWindow::on_image1_load_button_clicked()
     if(this->_dm.isRunning())
         return;
 
-    ImagePreviewDialog dialog(QDir::home());
+    ImagePreviewDialog dialog(QDir::current());
     int res = dialog.exec();
     if(res)
     {
@@ -186,7 +187,7 @@ void MainWindow::on_image2_load_button_clicked()
     if(this->_dm.isRunning())
         return;
 
-    ImagePreviewDialog dialog(QDir::home());
+    ImagePreviewDialog dialog(QDir::current());
     int res = dialog.exec();
     if(res)
     {
@@ -262,6 +263,8 @@ void MainWindow::doMorph()
 
 void MainWindow::_doMorph()
 {
+    // check num of segments
+    if(!image1->getSegments().size() || !image2->getSegments().size()) return;
     if(image1->getSegments().size()!=image2->getSegments().size()) return;
 
     ui->image1_morph_check->setEnabled(false);
@@ -316,6 +319,10 @@ void MainWindow::_doMorph()
 
     delete image2t1;
     image2t1 = 0;
+
+//    ImageWrapper tmp(*imager);
+//    qDebug()<<"interpolation";
+//    iutil.bilinearInterpolation(&tmp, imager, 2);
 
     this->progress->setVisible(false);
     ui->image1_morph_check->setEnabled(true);
@@ -446,6 +453,8 @@ void MainWindow::on_play_button_clicked()
 void MainWindow::on_stop_button_clicked()
 {
     stop();
+    isRecording = false;
+    ui->record_button->setChecked(false);
 }
 
 void MainWindow::on_record_button_toggled(bool checked)
@@ -530,6 +539,10 @@ void MainWindow::play()
     ui->duration_spin->setEnabled(false);
     ui->trasitions_spin->setEnabled(false);
     ui->image_weight_slider->setValue(0);
+
+    ui->image1_segments_edit_button->setEnabled(false);
+    ui->image2_segments_edit_button->setEnabled(false);
+
     play_timer->start();
 }
 
@@ -538,6 +551,10 @@ void MainWindow::stop()
     play_timer->stop();
     ui->duration_spin->setEnabled(true);
     ui->trasitions_spin->setEnabled(true);
+
+    ui->image1_segments_edit_button->setEnabled(true);
+    ui->image2_segments_edit_button->setEnabled(true);
+
 }
 
 void MainWindow::record_tick()
@@ -549,6 +566,7 @@ void MainWindow::record_tick()
 
 void MainWindow::record_finish()
 {
+    record_tick();
     doFFMPEG();
     this->recordCount=0;
     ui->record_button->setChecked(false);
@@ -573,14 +591,17 @@ void MainWindow::on_trasitions_spin_editingFinished()
 
 void MainWindow::doFFMPEG()
 {
-    QString cmd = "ffmpeg -y -r %1 -i \"%2\" -c:v libx264 -r %3 \"%4\"";
+    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -c:v libx264 -r %3 \"%4\"";
     QProcess ffmpeg;
 
     if(!this->rec_output->fileName().endsWith(".mp4"))
         this->rec_output->setFileName(this->rec_output->fileName()+".mp4");
 
-    cmd = cmd.arg(this->fps).arg( this->rec_temp_dir.absoluteFilePath("temp%d.jpg") )
-            .arg(this->fps)
+    int fps_fix = this->recordCount / ui->duration_spin->value();
+
+    cmd = cmd.arg(fps_fix)
+            .arg( this->rec_temp_dir.absoluteFilePath("temp%d.jpg") )
+            .arg(fps_fix)
             .arg(this->rec_output->fileName());
 
     qDebug()<<cmd;
@@ -595,4 +616,34 @@ void MainWindow::on_outside_color_button_clicked()
     this->outside_color = QColor(rgba);
     QString ssColor = QString("background-color: %1;").arg(QColor(rgba).name());
     ui->outside_color_button->setStyleSheet(ssColor);
+}
+
+void MainWindow::on_image1_segments_edit_button_clicked()
+{
+    SegmentsEditDialog dlg(image1);
+    if(dlg.exec())
+    {
+        int toRem = dlg.selected();
+        if(toRem < image1->getSegments().size() && toRem >= 0)
+        {
+            image1->getSegments().remove(toRem);
+            updateImage1Segments();
+            image1_widget->repaint();
+        }
+    }
+}
+
+void MainWindow::on_image2_segments_edit_button_clicked()
+{
+    SegmentsEditDialog dlg(image2);
+    if(dlg.exec())
+    {
+        int toRem = dlg.selected();
+        if(toRem < image2->getSegments().size() && toRem >= 0)
+        {
+            image2->getSegments().remove(toRem);
+            updateImage2Segments();
+            image2_widget->repaint();
+        }
+    }
 }

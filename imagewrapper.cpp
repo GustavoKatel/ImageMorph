@@ -126,17 +126,8 @@ QSize ImageWrapper::getSize()
 
 void ImageWrapper::load(const char *fileName)
 {
-    orientedSegments.clear();
-
-    if(QString(fileName).endsWith(".ims"))
-    {
-        loadStructure(fileName);
-    } else {
-        image->load(fileName);
-        fixedSegments();
-    }
-
-    emit update();
+    QString str(fileName);
+    this->load(str);
 }
 
 void ImageWrapper::load(QString &fileName)
@@ -149,7 +140,7 @@ void ImageWrapper::load(QString &fileName)
     } else {
         image->load(fileName);
         checkSizeP2();
-        fixedSegments();
+//        fixedSegments();
     }
 
     emit update();
