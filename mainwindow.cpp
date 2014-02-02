@@ -570,6 +570,10 @@ void MainWindow::record_finish()
     doFFMPEG();
     this->recordCount=0;
     ui->record_button->setChecked(false);
+
+
+    ui->image1_segments_edit_button->setEnabled(true);
+    ui->image2_segments_edit_button->setEnabled(true);
 }
 
 void MainWindow::doFPS()
@@ -591,7 +595,8 @@ void MainWindow::on_trasitions_spin_editingFinished()
 
 void MainWindow::doFFMPEG()
 {
-    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -c:v libx264 -r %3 \"%4\"";
+//    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -c:v libx264 -r %3 \"%4\"";
+    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -r %3 \"%4\"";
     QProcess ffmpeg;
 
     if(!this->rec_output->fileName().endsWith(".mp4"))

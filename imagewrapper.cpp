@@ -70,6 +70,7 @@ void ImageWrapper::getPixel(int col, int row, unsigned int *r, unsigned int *g, 
         rgb = image->pixel(col, row);
     } else {
         rgb = qRgba(0,0,0,0);
+        qDebug()<<"out";
     }
 
     testAndSet(r, qRed(rgb));
@@ -140,7 +141,7 @@ void ImageWrapper::load(QString &fileName)
     } else {
         image->load(fileName);
         checkSizeP2();
-//        fixedSegments();
+        fixedSegments();
     }
 
     emit update();

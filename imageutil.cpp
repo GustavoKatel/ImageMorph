@@ -63,6 +63,12 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
                 dist_i_y = ( Q2.y() - Q.y() ) * t;
                 Q2.setX(Q.x() + dist_i_x);
                 Q2.setY(Q.y() + dist_i_y);
+
+//                if(seg==4)
+//                {
+//                    qDebug()<<"P2: "<<P2;
+//                    qDebug()<<"Q2: "<<Q2;
+//                }
                 // end of interpolate
 
                 PX = X - P;
@@ -74,29 +80,30 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
                 u = u / (pqNorm * pqNorm) ;
 
                 // calculating v
-                // using perpendicular 1, where pPQ = ( PQy , -PQx )
-                pPQ = QPointF( PQ.y() , -PQ.x() );
+                // using perpendicular 1, where pPQ = ( Qy - Py , Px - Qx )
+                pPQ = QPointF( Q.y() - P.y() , P.x() - Q.x() );
                 v = PX.x() * pPQ.x() + PX.y() * pPQ.y();
                 v = v / pqNorm;
 
                 // new position
                 PQ2 = Q2 - P2;
                 double pq2Norm = std::sqrt( PQ2.x()*PQ2.x() + PQ2.y()*PQ2.y() );
-                pPQ2 = QPointF( PQ2.y(), -PQ2.x() );
+                pPQ2 = QPointF( Q2.y() - P2.y()  , P2.x() - Q2.x() );
                 X2 = QPointF();
                 X2.setX( P2.x() + u*PQ2.x() + v* pPQ2.x()/pq2Norm );
                 X2.setY( P2.y() + u*PQ2.y() + v* pPQ2.y()/pq2Norm );
 
+                // dist
                 double sA, sB, sC;
                 sA = P.y() - Q.y();
                 sB = Q.x() - P.x();
                 sC = P.x()*Q.y() - Q.x()*P.y();
 
                 double dist = std::abs( sA * X.x() + sB * X.y() + sC ) / std::sqrt( std::pow(sA, 2) + std::pow(sB, 2) );
-                double weight = std::pow( std::pow(pq2Norm,p) / (a + dist)  , b );
+                double weight = std::pow( std::pow(pqNorm,p) / (a + dist)  , b );
 
-                double deltaX = X2.x(), // - X.x(),
-                        deltaY = X2.y(); // - X.y();
+                double deltaX = X2.x() - X.x(),
+                        deltaY = X2.y() - X.y();
 
                 sumX += deltaX * weight;
                 sumY += deltaY * weight;
@@ -107,8 +114,8 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
 
             }
 
-            // X2 = QPointF( X.x() + sumX/sumW, X.y() + sumY/sumW );
-            X2 = QPointF( sumX/sumW, sumY/sumW );
+             X2 = QPointF( X.x() + sumX/sumW, X.y() + sumY/sumW );
+//            X2 = QPointF( sumX/sumW, sumY/sumW );
 
             X2.setX( std::floor(X2.x()+0.5) );
             X2.setY( std::floor(X2.y()+0.5) );
@@ -116,10 +123,9 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
             // collect the color
             unsigned int r, g, b;
 //            image1->getPixel( X2.x(), X2.y(), &r, &g, &b);
-//            this->bilinearInterpolation(image1, X2.x(), X2.y(), &r, &g, &b, 1);
-            getColor(image1, X2.x(), X2.y(), &r, &g, &b);
+            this->bilinearInterpolationInPoint(image1, X2.x(), X2.y(), &r, &g, &b, 1);
+//            getColor(image1, X2.x(), X2.y(), &r, &g, &b);
 
-            // TODO: bilinear here?
             imager->setPixel(col, row, r, g, b);
 
         }
@@ -214,11 +220,42 @@ void ImageUtil::bilinearInterpolationInPoint(ImageWrapper *image, int col, int r
      */
 
     // check if the limits were exceeded
-    if( col+dist>=w || col-dist<0 || row+dist>=h || row-dist<0 || dist==0 )
+//    if( col+dist>=w || col-dist<0 || row+dist>=h || row-dist<0 || dist==0 )
+//    {
+//        testAndSet(r, outside_color.red() );
+//        testAndSet(g, outside_color.green() );
+//        testAndSet(b, outside_color.blue() );
+//        return;
+//    }
+    int bcol = col, brow = row;
+    bool exit=0;
+    if( col+dist>=w )
     {
-        testAndSet(r, outside_color.red() );
-        testAndSet(g, outside_color.green() );
-        testAndSet(b, outside_color.blue() );
+        bcol = w-1;
+        exit = true;
+    }
+    if( col-dist<0 )
+    {
+        bcol = 0;
+        exit = true;
+    }
+    if( row+dist>=h )
+    {
+        brow = h-1;
+        exit = true;
+    }
+    if( row-dist<0 )
+    {
+        brow = 0;
+        exit = true;
+    }
+    if(exit)
+    {
+        unsigned int borderColor[3];
+        image->getPixel(bcol, brow, borderColor, borderColor+1, borderColor+2);
+        testAndSet(r, borderColor[0]);
+        testAndSet(g, borderColor[1]);
+        testAndSet(b, borderColor[2]);
         return;
     }
 
