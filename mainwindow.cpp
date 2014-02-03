@@ -469,7 +469,7 @@ void MainWindow::on_record_button_toggled(bool checked)
     ui->repeat_button->setEnabled(!checked);
     if(checked)
     {
-        QString filename = QFileDialog::getSaveFileName(this, tr("Select output file"), "", "MPEG-4 Video (*.mp4)");
+        QString filename = QFileDialog::getSaveFileName(this, tr("Select output file"), "", "MKV Video (*.mkv)");
 
         if(filename.isEmpty())
         {
@@ -602,11 +602,12 @@ void MainWindow::on_trasitions_spin_editingFinished()
 void MainWindow::doFFMPEG()
 {
 //    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -c:v libx264 -r %3 \"%4\"";
-    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -r %3 \"%4\"";
+//    QString cmd = "ffmpeg -y -itsoffset 0.5 -r %1 -i \"%2\" -r %3 \"%4\"";
+    QString cmd = "avconv -y -itsoffset 0.5 -r %1 -i \"%2\" -r %3 \"%4\"";
     QProcess ffmpeg;
 
-    if(!this->rec_output->fileName().endsWith(".mp4"))
-        this->rec_output->setFileName(this->rec_output->fileName()+".mp4");
+    if(!this->rec_output->fileName().endsWith(".mkv"))
+        this->rec_output->setFileName(this->rec_output->fileName()+".mkv");
 
     int fps_fix = this->recordCount / ui->duration_spin->value();
 
