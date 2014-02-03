@@ -160,8 +160,8 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
             // collect the color
             unsigned int r, g, b;
 //            image1->getPixel( X2.x(), X2.y(), &r, &g, &b);
-            this->bilinearInterpolationInPoint(image1, Xl.x(), Xl.y(), &r, &g, &b, 1);
-//            getColor(image1, X2.x(), X2.y(), &r, &g, &b);
+//            this->bilinearInterpolationInPoint(image1, Xl.x(), Xl.y(), &r, &g, &b, 1);
+            getColor(image1, Xl.x(), Xl.y(), &r, &g, &b);
 
             imager->setPixel(col, row, r, g, b);
 
@@ -264,37 +264,6 @@ void ImageUtil::bilinearInterpolationInPoint(ImageWrapper *image, int col, int r
         testAndSet(b, outside_color.blue() );
         return;
     }
-//    int bcol = col, brow = row;
-//    bool exit=0;
-//    if( col+dist>=w )
-//    {
-//        bcol = w-1;
-//        exit = true;
-//    }
-//    if( col-dist<0 )
-//    {
-//        bcol = 0;
-//        exit = true;
-//    }
-//    if( row+dist>=h )
-//    {
-//        brow = h-1;
-//        exit = true;
-//    }
-//    if( row-dist<0 )
-//    {
-//        brow = 0;
-//        exit = true;
-//    }
-//    if(exit)
-//    {
-//        unsigned int borderColor[3];
-//        image->getPixel(bcol, brow, borderColor, borderColor+1, borderColor+2);
-//        testAndSet(r, borderColor[0]);
-//        testAndSet(g, borderColor[1]);
-//        testAndSet(b, borderColor[2]);
-//        return;
-//    }
 
     unsigned int q12[3],
             q22[3],
