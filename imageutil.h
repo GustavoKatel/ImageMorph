@@ -65,6 +65,8 @@ private:
 
     void getColor(ImageWrapper *image, int col, int row, unsigned int *r, unsigned int *g, unsigned int *b);
 
+    double distance(double x1, double y1, double x2, double y2, double x3, double y3 );
+
 };
 
 #endif // IMAGEUTIL_H

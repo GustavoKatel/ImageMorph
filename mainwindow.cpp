@@ -300,11 +300,17 @@ void MainWindow::_doMorph()
     image1t2 = new ImageWrapper( size, c );
     image2t1 = new ImageWrapper( size, c );
 
-    this->progress->setFormat("Warp image1 -> 2 (%p%)");
-    iutil.warp(image1, image2, image1t2, a, b, p, t);
+    if(ui->image1_morph_check->isChecked())
+    {
+        this->progress->setFormat("Warp image1 -> 2 (%p%)");
+        iutil.warp(image1, image2, image1t2, a, b, p, t);
+    }
 
-    this->progress->setFormat("Warp image2 -> 1 (%p%)");
-    iutil.warp(image2, image1, image2t1, a, b, p, 1-t);
+    if(ui->image2_morph_check->isChecked())
+    {
+        this->progress->setFormat("Warp image2 -> 1 (%p%)");
+        iutil.warp(image2, image1, image2t1, a, b, p, 1-t);
+    }
 
     if(!ui->image1_morph_check->isChecked())
         t = 1;

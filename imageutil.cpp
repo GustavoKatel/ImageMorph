@@ -1,6 +1,7 @@
 #include "imageutil.h"
 
 #include <QDebug>
+#include <QPainter>
 
 #include <cmath>
 
@@ -33,7 +34,20 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
 
     total_progress *= totalSegments;
 
-    QPointF PX, PQ, pPQ, P, Q, X, P2, Q2, X2, PQ2, pPQ2;
+    QPainter paint(imager->getQImage());
+    QPen penLines;
+    penLines.setWidth(2);
+    penLines.setColor(Qt::red);
+
+    QPen penPoints;
+    penPoints.setWidth(4);
+    penPoints.setColor(Qt::black);
+
+    QPen penNumbers;
+    penNumbers.setWidth(4);
+    penNumbers.setColor(Qt::blue);
+
+    QPointF Pi, Qi, Pil, Qil, PiQi, pPiQi, PilQil, pPilQil, PiX, X, Xl;
     double sumX = 0.0, sumY = 0.0, sumW = 0.0;
     for(row=0;row<h;row++)
     {
@@ -42,68 +56,91 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
             X.setX(col);
             X.setY(row);
 
-            sumX = sumY = sumW = 0.0;
+            sumX = 0.0;
+            sumY = 0.0;
+            sumW = 0.0;
 
             // iterate all segments
             for(seg=0;seg<totalSegments;seg++)
             {
-                P = image2->getSegments().at(seg).first;
-                Q = image2->getSegments().at(seg).second;
+                Pi = image2->getSegments().at(seg).first;
+                Qi = image2->getSegments().at(seg).second;
 
-                P2 = image1->getSegments().at(seg).first;
-                Q2 = image1->getSegments().at(seg).second;
+                Pil = image1->getSegments().at(seg).first;
+                Qil = image1->getSegments().at(seg).second;
+
+                // ATENTION!
+                // Pi and Qi are destination image
+                // Pil and Qil are source image
 
                 // interpolate
-                double dist_i_x = ( P2.x() - P.x() ) * t;
-                double dist_i_y = ( P2.y() - P.y() ) * t;
-                P2.setX(P.x() + dist_i_x);
-                P2.setY(P.y() + dist_i_y);
+                double dist_i_x = ( Pil.x() - Pi.x() ) * t;
+                double dist_i_y = ( Pil.y() - Pi.y() ) * t;
+                Pil.setX(Pi.x() + dist_i_x);
+                Pil.setY(Pi.y() + dist_i_y);
 
-                dist_i_x = ( Q2.x() - Q.x() ) * t;
-                dist_i_y = ( Q2.y() - Q.y() ) * t;
-                Q2.setX(Q.x() + dist_i_x);
-                Q2.setY(Q.y() + dist_i_y);
+                dist_i_x = ( Qil.x() - Qi.x() ) * t;
+                dist_i_y = ( Qil.y() - Qi.y() ) * t;
+                Qil.setX(Qi.x() + dist_i_x);
+                Qil.setY(Qi.y() + dist_i_y);
 
-//                if(seg==4)
-//                {
-//                    qDebug()<<"P2: "<<P2;
-//                    qDebug()<<"Q2: "<<Q2;
-//                }
+                // draw lines
+//                paint.setPen(penLines);
+//                paint.drawLine(Pil, Qil);
+
+//                paint.setPen(penPoints);
+//                paint.drawPoint(Qil);
+
+//                paint.setPen(penNumbers);
+//                paint.drawText(Qil, QString::number(seg));
+
                 // end of interpolate
 
-                PX = X - P;
-                PQ = Q - P;
+                PiX = X - Pi;
+                PiQi = Qi - Pi;
+                double piqiNorm = std::sqrt( PiQi.x()*PiQi.x() + PiQi.y()*PiQi.y() );
+
+                PilQil = Qil - Pil;
+                double pilqilNorm = std::sqrt( PilQil.x()*PilQil.x() + PilQil.y()*PilQil.y() );
+
+                // using perpendicular 1, where pPQ = ( Qy - Py , Px - Qx )
+                pPiQi = QPointF( Qi.y() - Pi.y() , Pi.x() - Qi.x() );
+                pPilQil = QPointF( Qil.y() - Pil.y() , Pil.x() - Qil.x() );
 
                 // calculating u
-                double pqNorm = std::sqrt( PQ.x()*PQ.x() + PQ.y()*PQ.y() );
-                u = PX.x() * PQ.x() + PX.y() * PQ.y();
-                u = u / (pqNorm * pqNorm) ;
+                u = PiX.x() * PiQi.x() + PiX.y() * PiQi.y();
+                u = u / (piqiNorm * piqiNorm) ;
 
                 // calculating v
-                // using perpendicular 1, where pPQ = ( Qy - Py , Px - Qx )
-                pPQ = QPointF( Q.y() - P.y() , P.x() - Q.x() );
-                v = PX.x() * pPQ.x() + PX.y() * pPQ.y();
-                v = v / pqNorm;
+                v = PiX.x() * pPiQi.x() + PiX.y() * pPiQi.y();
+                v = v / piqiNorm;
 
                 // new position
-                PQ2 = Q2 - P2;
-                double pq2Norm = std::sqrt( PQ2.x()*PQ2.x() + PQ2.y()*PQ2.y() );
-                pPQ2 = QPointF( Q2.y() - P2.y()  , P2.x() - Q2.x() );
-                X2 = QPointF();
-                X2.setX( P2.x() + u*PQ2.x() + v* pPQ2.x()/pq2Norm );
-                X2.setY( P2.y() + u*PQ2.y() + v* pPQ2.y()/pq2Norm );
+                Xl = QPointF();
+                Xl.setX( Pil.x() + u*PilQil.x() + v* pPilQil.x()/pilqilNorm );
+                Xl.setY( Pil.y() + u*PilQil.y() + v* pPilQil.y()/pilqilNorm );
 
                 // dist
-                double sA, sB, sC;
-                sA = P.y() - Q.y();
-                sB = Q.x() - P.x();
-                sC = P.x()*Q.y() - Q.x()*P.y();
+                double dist = 0.0;
 
-                double dist = std::abs( sA * X.x() + sB * X.y() + sC ) / std::sqrt( std::pow(sA, 2) + std::pow(sB, 2) );
-                double weight = std::pow( std::pow(pqNorm,p) / (a + dist)  , b );
+                if(u >= 1)
+                {
+                    QPointF QiX = X - Qi;
+                    dist = std::sqrt( QiX.x()*QiX.x() + QiX.y()*QiX.y() );
+                } else if(u<=0) {
+                    dist = std::sqrt( PiX.x()*PiX.x() + PiX.y()*PiX.y() );
+                } else {
+                    dist = std::abs(v);
+                }
+//                dist = distance(Pi.x(), Pi.y(), Qi.x(), Qi.y(), X.x(), X.y());
 
-                double deltaX = X2.x() - X.x(),
-                        deltaY = X2.y() - X.y();
+                double tmp = (a + dist);
+                double weight = std::pow(piqiNorm,p);
+                if(tmp>0) weight = weight / tmp;
+                weight = std::pow( weight  , b );
+
+                double deltaX = Xl.x() - X.x(),
+                        deltaY = Xl.y() - X.y();
 
                 sumX += deltaX * weight;
                 sumY += deltaY * weight;
@@ -114,16 +151,16 @@ void ImageUtil::warp(ImageWrapper *image1, ImageWrapper *image2, ImageWrapper *i
 
             }
 
-             X2 = QPointF( X.x() + sumX/sumW, X.y() + sumY/sumW );
+             Xl = QPointF( X.x() + sumX/sumW, X.y() + sumY/sumW );
 //            X2 = QPointF( sumX/sumW, sumY/sumW );
 
-            X2.setX( std::floor(X2.x()+0.5) );
-            X2.setY( std::floor(X2.y()+0.5) );
+//            Xl.setX( std::floor(Xl.x()+0.5) );
+//            Xl.setY( std::floor(Xl.y()+0.5) );
 
             // collect the color
             unsigned int r, g, b;
 //            image1->getPixel( X2.x(), X2.y(), &r, &g, &b);
-            this->bilinearInterpolationInPoint(image1, X2.x(), X2.y(), &r, &g, &b, 1);
+            this->bilinearInterpolationInPoint(image1, Xl.x(), Xl.y(), &r, &g, &b, 1);
 //            getColor(image1, X2.x(), X2.y(), &r, &g, &b);
 
             imager->setPixel(col, row, r, g, b);
@@ -220,44 +257,44 @@ void ImageUtil::bilinearInterpolationInPoint(ImageWrapper *image, int col, int r
      */
 
     // check if the limits were exceeded
-//    if( col+dist>=w || col-dist<0 || row+dist>=h || row-dist<0 || dist==0 )
-//    {
-//        testAndSet(r, outside_color.red() );
-//        testAndSet(g, outside_color.green() );
-//        testAndSet(b, outside_color.blue() );
-//        return;
-//    }
-    int bcol = col, brow = row;
-    bool exit=0;
-    if( col+dist>=w )
+    if( col+dist>=w || col-dist<0 || row+dist>=h || row-dist<0 || dist==0 )
     {
-        bcol = w-1;
-        exit = true;
-    }
-    if( col-dist<0 )
-    {
-        bcol = 0;
-        exit = true;
-    }
-    if( row+dist>=h )
-    {
-        brow = h-1;
-        exit = true;
-    }
-    if( row-dist<0 )
-    {
-        brow = 0;
-        exit = true;
-    }
-    if(exit)
-    {
-        unsigned int borderColor[3];
-        image->getPixel(bcol, brow, borderColor, borderColor+1, borderColor+2);
-        testAndSet(r, borderColor[0]);
-        testAndSet(g, borderColor[1]);
-        testAndSet(b, borderColor[2]);
+        testAndSet(r, outside_color.red() );
+        testAndSet(g, outside_color.green() );
+        testAndSet(b, outside_color.blue() );
         return;
     }
+//    int bcol = col, brow = row;
+//    bool exit=0;
+//    if( col+dist>=w )
+//    {
+//        bcol = w-1;
+//        exit = true;
+//    }
+//    if( col-dist<0 )
+//    {
+//        bcol = 0;
+//        exit = true;
+//    }
+//    if( row+dist>=h )
+//    {
+//        brow = h-1;
+//        exit = true;
+//    }
+//    if( row-dist<0 )
+//    {
+//        brow = 0;
+//        exit = true;
+//    }
+//    if(exit)
+//    {
+//        unsigned int borderColor[3];
+//        image->getPixel(bcol, brow, borderColor, borderColor+1, borderColor+2);
+//        testAndSet(r, borderColor[0]);
+//        testAndSet(g, borderColor[1]);
+//        testAndSet(b, borderColor[2]);
+//        return;
+//    }
 
     unsigned int q12[3],
             q22[3],
@@ -333,3 +370,35 @@ void ImageUtil::getColor(ImageWrapper *image, int col, int row, unsigned int *r,
 
 }
 
+double ImageUtil::distance(double x1, double y1, double x2, double y2, double x3, double y3)
+{
+    double sA, sB, sC;
+    sA = y1 - y2;
+    sB = x2 - x1;
+    sC = x1*y2 - x2*y1;
+
+    return std::abs( sA * x3 + sB * y3 + sC ) / std::sqrt( std::pow(sA, 2) + std::pow(sB, 2) );
+
+//    double px = x2-x1;
+//    double py = y2-y1;
+
+//    double dot = px*px + py*py;
+
+//    double u =  ((x3 - x1) * px + (y3 - y1) * py) / float(dot);
+
+//    if(u > 1)
+//        u = 1;
+//    else if( u < 0 )
+//        u = 0;
+
+//    double x = x1 + u * px;
+//    double y = y1 + u * py;
+
+//    double dx = x - x3;
+//    double dy = y - y3;
+
+//    double dist = std::sqrt(dx*dx + dy*dy);
+
+//    return dist;
+
+}
