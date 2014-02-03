@@ -153,7 +153,7 @@
          <double>0.010000000000000</double>
         </property>
         <property name="value">
-         <double>0.010000000000000</double>
+         <double>0.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -201,7 +201,7 @@
       <item>
        <widget class="QDoubleSpinBox" name="p_value_spin">
         <property name="minimum">
-         <double>0.010000000000000</double>
+         <double>0.000000000000000</double>
         </property>
         <property name="singleStep">
          <double>0.010000000000000</double>
@@ -267,7 +267,7 @@
                <x>0</x>
                <y>0</y>
                <width>370</width>
-               <height>180</height>
+               <height>181</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -408,7 +408,7 @@
                <x>0</x>
                <y>0</y>
                <width>369</width>
-               <height>180</height>
+               <height>181</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -601,6 +601,7 @@
      <string>Image</string>
     </property>
     <addaction name="actionClear_all"/>
+    <addaction name="actionSave_result"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -634,6 +635,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About ImageMorph</string>
+   </property>
+  </action>
+  <action name="actionSave_result">
+   <property name="text">
+    <string>Save result</string>
    </property>
   </action>
  </widget>

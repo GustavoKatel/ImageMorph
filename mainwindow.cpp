@@ -659,3 +659,10 @@ void MainWindow::on_image2_segments_edit_button_clicked()
         }
     }
 }
+
+void MainWindow::on_actionSave_result_triggered()
+{
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save result"), "", "JPEG Image (*.jpg)");
+    if(!filename.isEmpty())
+        imager->save(filename);
+}

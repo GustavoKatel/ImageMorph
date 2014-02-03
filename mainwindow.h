@@ -85,6 +85,8 @@ private slots:
 
     void on_image2_segments_edit_button_clicked();
 
+    void on_actionSave_result_triggered();
+
 private:
     Ui::MainWindow *ui;
     //
